@@ -1,6 +1,7 @@
 from typing import NoReturn
 from linear_regression import LinearRegression
 import numpy as np
+from sklearn.preprocessing import PolynomialFeatures
 
 
 class PolynomialFitting(LinearRegression):
@@ -16,6 +17,8 @@ class PolynomialFitting(LinearRegression):
         k : int
             Degree of polynomial to fit
         """
+        self.degree_ = k
+        self.linear_model_ = LinearRegression(include_intercept=False)
         pass
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> NoReturn:
@@ -30,7 +33,8 @@ class PolynomialFitting(LinearRegression):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        pass
+        X = self.__transform(X)
+        self.linear_model_.fit(X, y)
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -46,7 +50,8 @@ class PolynomialFitting(LinearRegression):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        pass
+        X = self.__transform(X)
+        self.linear_model_.predict(X)
 
     def loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -65,7 +70,8 @@ class PolynomialFitting(LinearRegression):
         loss : float
             Performance under MSE loss function
         """
-        pass
+        X = self.__transform(X)
+        return self.linear_model_.loss(X, y)
 
     def __transform(self, X: np.ndarray) -> np.ndarray:
         """
@@ -80,4 +86,7 @@ class PolynomialFitting(LinearRegression):
         transformed: ndarray of shape (n_samples, k+1)
             Vandermonde matrix of given samples up to degree k
         """
-        pass
+        if X.ndim == 2:
+            X = X.flatten()
+
+        return np.vander(X, self.degree_ + 1, increasing=True)

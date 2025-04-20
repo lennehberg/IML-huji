@@ -43,7 +43,7 @@ class LinearRegression:
         self.include_intercept_ = include_intercept
         self.coefs_ = None
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> NoReturn:
+    def fit(self, X: np.ndarray, y: np.ndarray) -> None:
         """
         Fit Least Squares model to given samples
 
@@ -101,5 +101,7 @@ class LinearRegression:
         loss : float
             Performance under MSE loss function
         """
+        if self.include_intercept_:
+            X = _add_intercept(X)
         rss = np.linalg.norm(X @ self.coefs_ - y) ** 2
         return rss / X.shape[0]
