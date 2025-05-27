@@ -40,7 +40,21 @@ class DecisionStump(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        raise NotImplementedError()
+        n_features = X.shape[1]
+        min_error = float('inf')
+
+        # find the best feature which brings the misclassification error to a minimum
+        for j in range(n_features):
+            feature_values = X[:, j]
+            # on this feature, find the best threshhold with the best sign,
+            # save if misclasification error is smaller than min_error
+            for sign in [-1, 1]:
+                threshhold, error = self._find_threshold(feature_values, y, sign)
+                if error < min_error:
+                    min_error = error
+                    self.threshold_ = threshhold
+                    self.j_ = j
+                    self.sign_ = sign
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -64,7 +78,8 @@ class DecisionStump(BaseEstimator):
         Feature values strictly below threshold are predicted as `-sign` whereas values which equal
         to or above the threshold are predicted as `sign`
         """
-        raise NotImplementedError()
+        feature_values = X[:, self.j_]
+        return np.where(feature_values >= self.threshold_, self.sign_, -self.sign_)
 
     def _find_threshold(self, values: np.ndarray, labels: np.ndarray, sign: int) -> Tuple[float, float]:
         """
@@ -96,7 +111,29 @@ class DecisionStump(BaseEstimator):
         For every tested threshold, values strictly below threshold are predicted as `-sign` whereas values
         which equal to or above the threshold are predicted as `sign`
         """
-        raise NotImplementedError()
+        # sort feature values for easier computation
+        sorted_indices = np.argsort(values)
+        sorted_values, sorted_labes = values[sorted_indices], labels[sorted_indices]
+
+        # find all thresh-holds between 2 consecutive values
+        threshholds = np.concatenate([-np.inf],
+                                     (sorted_values[1:] + sorted_values[:-1]) / 2,
+                                     [np.inf])
+
+        best_threshhold = None
+        min_error=float('inf')
+
+        # iterate over all threshholds to find the one that brings the misclassification error to a minimum
+        for t in threshholds:
+            preds = np.where(values>=t, sign, -sign)
+            error = misclassification_error(labels, preds, normalize=True)
+            # if the error is smaller then the min error, set the new threshhold, and keep looking for a better minimizer
+            if error < min_error:
+                best_threshhold = t
+                min_error = error
+
+        return best_threshhold, min_error
+
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -115,4 +152,5 @@ class DecisionStump(BaseEstimator):
         loss : float
             Performance under missclassification loss function
         """
-        raise NotImplementedError()
+        y_pred = self.predict(X)
+        return misclassification_error(y, y_pred, True)
