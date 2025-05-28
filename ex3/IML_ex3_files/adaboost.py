@@ -62,7 +62,8 @@ class AdaBoost(BaseEstimator):
 
     def _fit_and_weigh(self, X: np.ndarray, y: np.ndarray, D: np.ndarray):
         """
-        Fit the weak learner for the base learner
+        Fit the weak learner for the base learner and compute
+        the weights for the model and distribution
 
         Parameters
         ----------
@@ -89,7 +90,7 @@ class AdaBoost(BaseEstimator):
         return h, w, D
 
 
-    def _fit(self, X: np.ndarray, y: np.ndarray) -> NoReturn:
+    def _fit(self, X: np.ndarray, y: np.ndarray, D: np.ndarray=None) -> NoReturn:
         """
         Fit an AdaBoost classifier over given samples
 

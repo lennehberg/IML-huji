@@ -4,7 +4,13 @@ from sklearn.linear_model import LinearRegression as SklearnLR
 from sklearn.linear_model import Lasso as SklearnLasso
 import numpy as np
 from base_estimator import BaseEstimator
+from loss_functions import ms_loss
 
+
+def _add_intercept(X: np.ndarray) -> np.ndarray:
+    ones = np.ones((X.shape[0], 1))
+    X = np.hstack((ones, X))
+    return X
 
 class LinearRegression(BaseEstimator):
     def __init__(self):
@@ -34,7 +40,8 @@ class LinearRegression(BaseEstimator):
         loss : float
             Performance under MSE loss function
         """
-        raise NotImplementedError()
+        y_pred = self._predict(X)
+        return ms_loss(y, y_pred)
 
 
 class Lasso(BaseEstimator):
@@ -66,7 +73,8 @@ class Lasso(BaseEstimator):
         loss : float
             Performance under MSE loss function
         """
-        raise NotImplementedError()
+        y_pred = self._predict(X)
+        return ms_loss(y, y_pred)
 
 
 class RidgeRegression(BaseEstimator):
@@ -124,7 +132,16 @@ class RidgeRegression(BaseEstimator):
         -----
         Fits model with or without an intercept depending on value of `self.include_intercept_`
         """
-        raise NotImplementedError()
+        n_samples = y.shape[0]
+
+        if self.include_intercept_:
+            X = _add_intercept(X)  # Add intercept column
+            R = np.eye(X.shape[1])
+            R[0, 0] = 0  # Don't regularize the intercept
+        else:
+            R = np.eye(X.shape[1])
+
+        self.coefs_ = np.linalg.solve(X.T @ X + self.lam_ * R, X.T @ y)
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -140,7 +157,11 @@ class RidgeRegression(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        raise NotImplementedError()
+        # add intercept
+        if self.include_intercept_:
+            X = _add_intercept(X)
+
+        return X @ self.coefs_
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -159,6 +180,7 @@ class RidgeRegression(BaseEstimator):
         loss : float
             Performance under MSE loss function
         """
-        raise NotImplementedError()
+        y_pred = self._predict(X)
+        return ms_loss(y, y_pred)
 
 

@@ -42,3 +42,9 @@ def weighted_misclassiffication_error(y_true: np.ndarray, y_pred: np.ndarray, D:
     error_indices = np.where(y_true != y_pred)
     return np.sum(D[error_indices])
 
+
+def ms_loss(y_true: np.ndarray, y_pred: np.ndarray):
+    n_samples = y_true.shape[0]
+
+    rss = np.sum(np.square(y_true - y_pred))
+    return rss / n_samples
