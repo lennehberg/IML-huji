@@ -3,6 +3,8 @@ from typing import Tuple, NoReturn
 from base_estimator import BaseEstimator
 import numpy as np
 from itertools import product
+
+from ex3.IML_ex3_files.loss_functions import weighted_misclassiffication_error
 from loss_functions import misclassification_error
 
 
@@ -28,7 +30,7 @@ class DecisionStump(BaseEstimator):
         super().__init__()
         self.threshold_, self.j_, self.sign_ = None, None, None
 
-    def _fit(self, X: np.ndarray, y: np.ndarray) -> NoReturn:
+    def _fit(self, X: np.ndarray, y: np.ndarray, D: np.ndarray=None) -> NoReturn:
         """
         Fit a decision stump to the given data. That is, finds the best feature and threshold by which to split
 
@@ -39,6 +41,11 @@ class DecisionStump(BaseEstimator):
 
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
+
+        D : (Optional) ndarray of shape (n_samples, )
+            Weights for samples, if D is not None,
+            weighted_misclassification_error should be invoked,
+            instead of misclassification_error
         """
         n_features = X.shape[1]
         min_error = float('inf')
@@ -49,12 +56,13 @@ class DecisionStump(BaseEstimator):
             # on this feature, find the best threshhold with the best sign,
             # save if misclasification error is smaller than min_error
             for sign in [-1, 1]:
-                threshhold, error = self._find_threshold(feature_values, y, sign)
+                threshhold, error = self._find_threshold(feature_values, y, sign, D)
                 if error < min_error:
                     min_error = error
                     self.threshold_ = threshhold
                     self.j_ = j
                     self.sign_ = sign
+
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -81,7 +89,8 @@ class DecisionStump(BaseEstimator):
         feature_values = X[:, self.j_]
         return np.where(feature_values >= self.threshold_, self.sign_, -self.sign_)
 
-    def _find_threshold(self, values: np.ndarray, labels: np.ndarray, sign: int) -> Tuple[float, float]:
+
+    def _find_threshold(self, values: np.ndarray, labels: np.ndarray, sign: int, D: np.ndarray=None) -> Tuple[float, float]:
         """
         Given a feature vector and labels, find a threshold by which to perform a split
         The threshold is found according to the value minimizing the misclassification
@@ -97,6 +106,11 @@ class DecisionStump(BaseEstimator):
 
         sign: int
             Predicted label assigned to values equal to or above threshold
+
+        D : (Optional) ndarray of shape (n_samples, )
+            Weights for samples, if D is not None,
+            weighted_misclassification_error should be invoked,
+            instead of misclassification_error
 
         Returns
         -------
@@ -116,9 +130,11 @@ class DecisionStump(BaseEstimator):
         sorted_values, sorted_labes = values[sorted_indices], labels[sorted_indices]
 
         # find all thresh-holds between 2 consecutive values
-        threshholds = np.concatenate([-np.inf],
-                                     (sorted_values[1:] + sorted_values[:-1]) / 2,
-                                     [np.inf])
+        threshholds = np.concatenate([
+            np.array([-np.inf]),
+            (sorted_values[1:] + sorted_values[:-1]) / 2,
+            np.array([np.inf])
+        ])
 
         best_threshhold = None
         min_error=float('inf')
@@ -126,8 +142,10 @@ class DecisionStump(BaseEstimator):
         # iterate over all threshholds to find the one that brings the misclassification error to a minimum
         for t in threshholds:
             preds = np.where(values>=t, sign, -sign)
-            error = misclassification_error(labels, preds, normalize=True)
-            # if the error is smaller then the min error, set the new threshhold, and keep looking for a better minimizer
+            error = misclassification_error(labels, preds, normalize=True) \
+                    if D == None else \
+                    weighted_misclassiffication_error(labels, preds, D)
+            # if the error is smaller than the min error, set the new threshhold, and keep looking for a better minimizer
             if error < min_error:
                 best_threshhold = t
                 min_error = error
@@ -135,7 +153,7 @@ class DecisionStump(BaseEstimator):
         return best_threshhold, min_error
 
 
-    def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
+    def _loss(self, X: np.ndarray, y: np.ndarray, D: np.ndarray=None) -> float:
         """
         Evaluate performance under misclassification loss function
 
@@ -147,10 +165,17 @@ class DecisionStump(BaseEstimator):
         y : ndarray of shape (n_samples, )
             True labels of test samples
 
+        D : (Optional) ndarray of shape (n_samples, )
+            Weights for samples, if D is not None,
+            weighted_misclassification_error should be invoked,
+            instead of misclassification_error
+
         Returns
         -------
         loss : float
             Performance under missclassification loss function
         """
         y_pred = self.predict(X)
-        return misclassification_error(y, y_pred, True)
+        return misclassification_error(y, y_pred, True) \
+                if D == None else \
+                weighted_misclassiffication_error(y, y_pred, D)

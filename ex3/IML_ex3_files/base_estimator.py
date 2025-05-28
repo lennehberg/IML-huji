@@ -20,7 +20,7 @@ class BaseEstimator(ABC):
         """
         self.fitted_ = False
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> BaseEstimator:
+    def fit(self, X: np.ndarray, y: np.ndarray, D: np.ndarray=None) -> BaseEstimator:
         """
         Fit estimator for given input samples and responses
 
@@ -30,6 +30,10 @@ class BaseEstimator(ABC):
             Input data to fit an estimator for
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
+        D : (Optional) ndarray of shape (n_samples, )
+            Weights for samples, if D is not None,
+            weighted_misclassification_error should be invoked,
+            instead of misclassification_error
 
         Returns
         -------
@@ -65,7 +69,7 @@ class BaseEstimator(ABC):
             raise ValueError("Estimator must first be fitted before calling ``predict``")
         return self._predict(X)
 
-    def loss(self, X: np.ndarray, y: np.ndarray) -> float:
+    def loss(self, X: np.ndarray, y: np.ndarray, D: np.ndarray=None) -> float:
         """
         Evaluate performance under loss function specified for estimator
 
@@ -76,6 +80,11 @@ class BaseEstimator(ABC):
 
         y : ndarray of shape (n_samples, )
             True labels of test samples
+
+        D : (Optional) ndarray of shape (n_samples, )
+            Weights for samples, if D is not None,
+            weighted_misclassification_error should be invoked,
+            instead of misclassification_error
 
         Returns
         -------
@@ -91,7 +100,7 @@ class BaseEstimator(ABC):
         return self._loss(X, y)
 
     @abstractmethod
-    def _fit(self, X: np.ndarray, y: np.ndarray) -> NoReturn:
+    def _fit(self, X: np.ndarray, y: np.ndarray, D: np.ndarray=None) -> NoReturn:
         """
         Fit estimator for given input samples and responses
 
@@ -102,6 +111,11 @@ class BaseEstimator(ABC):
 
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
+
+        D : (Optional) ndarray of shape (n_samples, )
+            Weights for samples, if D is not None,
+            weighted_misclassification_error should be invoked,
+            instead of misclassification_error
         """
         raise NotImplementedError()
 
@@ -123,7 +137,7 @@ class BaseEstimator(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
+    def _loss(self, X: np.ndarray, y: np.ndarray, D: np.ndarray= None) -> float:
         """
         Evaluate performance under loss function specified for estimator
 
@@ -135,6 +149,11 @@ class BaseEstimator(ABC):
         y : ndarray of shape (n_samples, )
             True labels of test samples
 
+        D : (Optional) ndarray of shape (n_samples, )
+            Weights for samples, if D is not None,
+            weighted_misclassification_error should be invoked,
+            instead of misclassification_error
+
         Returns
         -------
         loss : float
@@ -142,7 +161,7 @@ class BaseEstimator(ABC):
         """
         raise NotImplementedError()
 
-    def fit_predict(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
+    def fit_predict(self, X: np.ndarray, y: np.ndarray, D: np.ndarray= None) -> np.ndarray:
         """
         Fit an estimator over given input data and predict responses for given samples
 
@@ -154,10 +173,15 @@ class BaseEstimator(ABC):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
 
+        D : (Optional) ndarray of shape (n_samples, )
+            Weights for samples, if D is not None,
+            weighted_misclassification_error should be invoked,
+            instead of misclassification_error
+
         Returns
         -------
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        self.fit(X, y)
+        self.fit(X, y, D)
         return self.predict(X)
