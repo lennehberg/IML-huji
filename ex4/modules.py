@@ -95,7 +95,7 @@ class L1(BaseModule):
         output: ndarray of shape (n_in,)
             L1 derivative with respect to self.weights at point self.weights
         """
-        if self.weights_ == np.zeros(self.weights_.shape):
+        if np.all(self.weights_ == 0):
             return np.linspace(-1, 1)
         else:
             return np.sign(self.weights_)
@@ -175,7 +175,7 @@ class LogisticModule(BaseModule):
         for i in range(n_samples):
             sum_i = y[i] * X[i] - (np.exp(np.inner(X[i], self.weights_)) /
                                    (1 + np.exp(np.inner(X[i], self.weights_))))
-            der_sum += sum_i
+            der_sum = der_sum + sum_i
 
         return -(der_sum / n_samples)
 

@@ -107,7 +107,7 @@ class LogisticRegression(BaseEstimator):
                                                                                         else L2(self.coefs_),
                                                  lam=self.lam_,
                                                  weights=self.coefs_,
-                                                 include_intercept=self.include_intercept_))
+                                                 include_intercept=self.include_intercept_), X=X, y=y)
 
 
 
@@ -168,4 +168,4 @@ class LogisticRegression(BaseEstimator):
             Performance under misclassification error
         """
         y_pred = self._predict(X)
-        return np.mean(y != y_pred)
+        return float(np.mean(y != y_pred))

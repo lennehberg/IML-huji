@@ -41,9 +41,9 @@ class GradientDescent:
         are specified in the `GradientDescent.fit` function
     """
     def __init__(self,
-                 learning_rate: BaseLR = FixedLR(1e-3),
+                 learning_rate: BaseLR = FixedLR(1e-17),
                  tol: float = 1e-5,
-                 max_iter: int = 1000,
+                 max_iter: int = 20000,
                  out_type: str = "last",
                  callback: Callable[[GradientDescent, ...], None] = default_callback):
         """
@@ -132,7 +132,7 @@ class GradientDescent:
             weights.append(x_t)
 
             # compute loss to find best
-            loss_t = f.compute_output(X, y)
+            loss_t = f.compute_output(X=X, y=y)
             losses.append(loss_t)
 
             # record findings
@@ -143,12 +143,12 @@ class GradientDescent:
                 break
 
             # compute gradient of f(x_t)
-            partial_f = f.compute_jacobian(X, y)
+            partial_f = f.compute_jacobian(X=X, y=y)
             # choose a sub-gradient at random from partial_f
             v_t =np.random.choice(partial_f)
 
             # get current step size
-            step_t = self.learning_rate_.lr_step(t)
+            step_t = self.learning_rate_.lr_step(t=t)
             # decent down the unknown, and hope for the best
             x_t_next = x_t - (step_t * v_t)
             # check tolerance
